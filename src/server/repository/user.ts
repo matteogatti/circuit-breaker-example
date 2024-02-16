@@ -1,14 +1,22 @@
-import { PrismaCircuitBreaker } from '@/server/utils/circuitBreaker/DatabaseCircuitBreaker';
+import CircuitBreaker from 'opossum';
 import { User, PrismaClient } from '@prisma/client';
+import logger from '@/server/utils/logger';
 
-export const getAllUsers = async (): Promise<User[] | void> => {
+// ... LIST
+
+export const getDatabaseAllUsers = async (prisma: PrismaClient): Promise<User[] | void> => {
   try {
-    const client = new PrismaCircuitBreaker();
-    const users = await client.exec((prisma: PrismaClient) =>
-      prisma.user.findMany()
-    );
+    const users = prisma.user.findMany();
     return users;
   } catch (e) {
     throw e;
   }
+};
+
+export const getAllUsers = async (prisma: PrismaClient) => {
+  const breaker = new CircuitBreaker(getDatabaseAllUsers);
+  breaker.on('success', (result) => logger.info(`[SUCCESS] getAllUsers ${JSON.stringify(result)}`));
+  breaker.on('reject', () => logger.error(`[REJECTED] getAllUsers`));
+  breaker.on('fallback', (data) => logger.info(`[FALLBACK] ${JSON.stringify(data)}`));
+  return breaker.fire(prisma);
 };
