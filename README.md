@@ -7,4 +7,5 @@ The idea is to make a POC around a BE that expose some APIs and internally commu
 ## Refereces
 
 - [Vite + Express](https://github.com/szymmis/vite-express)
-- [easy-breaker](https://github.com/delvedor/easy-breaker)
+- [Circuit breaker](https://martinfowler.com/bliki/CircuitBreaker.html)
+- [Opossum circuit breaker](https://github.com/nodeshift/opossum)
