@@ -7,3 +7,4 @@ The idea is to make a POC around a BE that expose some APIs and internally commu
 ## Refereces
 
 - [Vite + Express](https://github.com/szymmis/vite-express)
+- [easy-breaker](https://github.com/delvedor/easy-breaker)
