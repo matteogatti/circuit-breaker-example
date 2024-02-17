@@ -1,14 +1,20 @@
-import { DatabaseCrazyMonkeyException } from '@/server/exception/database';
+import { DatabaseCrazyMonkeyException, DatabaseInvalidParametersException } from '@/server/exception/database';
 import { createCircuitBreaker } from '@/server/utils/circuitBreaker';
 import { hasCrazyMonkey } from '@/server/utils/crazyMonkey';
 import { Post, PrismaClient } from '@prisma/client';
+import { z } from 'zod';
+
+const PostSchema = z.object({
+  title: z.string().min(5),
+  content: z.string().min(10),
+});
 
 // ... LIST
 
 const getDatabaseAllPosts = async (prisma: PrismaClient): Promise<Post[] | void> => {
   try {
     if (hasCrazyMonkey()) {
-      return new Promise((_, reject) => setTimeout(() => reject(new DatabaseCrazyMonkeyException('crazy monkey')), 1000));
+      return new Promise((_, reject) => setTimeout(() => reject(new DatabaseCrazyMonkeyException('Crazy monkey!')), 1000));
     }
 
     const posts = await prisma.post.findMany({
@@ -33,12 +39,17 @@ type CreatePost = Pick<Post, 'title' | 'content'>;
 
 const createDatabasePost = async (prisma: PrismaClient, { title, content }: CreatePost): Promise<Post> => {
   try {
+    if (!PostSchema.parse({ title, content })) {
+      return Promise.reject(() => new DatabaseInvalidParametersException());
+    }
+
     const author = await prisma.user.findFirstOrThrow();
 
     const post = await prisma.post.create({
       data: {
         title,
         content,
+        createdAt: new Date(),
         author: {
           connect: {
             email: author.email,

@@ -5,6 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import express, { Request, Response } from 'express';
 import { getRequestID, setRequestID } from '@/server/utils/requestId';
 import ViteExpress from 'vite-express';
+import bodyParser from 'body-parser';
 // import pinoHttp from 'pino-http';
 
 const app = express().disable('x-powered-by');
@@ -13,6 +14,7 @@ const prisma = new PrismaClient();
 // ... MIDDLEWARES
 
 app.use(setRequestID()); // SET UNIQUE UUID PER REQUEST
+app.use(bodyParser.json()); // PARSE BODY AS JSON
 // app.use(pinoHttp()); // LOG ALL REQUESTS
 
 // ... ROUTES
