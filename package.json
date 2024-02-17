@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "nodemon -w src/server -x tsx src/server/main.ts",
     "start": "NODE_ENV=production tsx src/server/main.ts",
-    "build": "vite build"
+    "build": "vite build",
+    "seed": "tsx prisma/seed.ts"
   },
   "devDependencies": {
     "@types/express": "^4.17.15",
