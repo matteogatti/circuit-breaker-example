@@ -1,6 +1,7 @@
 import { DatabaseCrazyMonkeyException, DatabaseInvalidParametersException } from '@/server/exception/database';
-import { createCircuitBreaker } from '@/server/utils/circuitBreaker';
+import { CircuitBreakerFunction, ExecuteFunction, createCircuitBreaker } from '@/server/utils/circuitBreaker';
 import { hasCrazyMonkey } from '@/server/utils/crazyMonkey';
+import { DatabaseErrorHandlerResponse } from '@/server/utils/handler/error';
 import { Post, PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 
@@ -11,7 +12,7 @@ const PostSchema = z.object({
 
 // ... LIST
 
-const getDatabaseAllPosts = async (prisma: PrismaClient): Promise<Post[] | void> => {
+const getDatabaseAllPosts: ExecuteFunction<[PrismaClient], Post[]> = async (prisma: PrismaClient) => {
   try {
     if (hasCrazyMonkey()) {
       return new Promise((_, reject) => setTimeout(() => reject(new DatabaseCrazyMonkeyException('Crazy monkey!')), 1000));
@@ -28,7 +29,10 @@ const getDatabaseAllPosts = async (prisma: PrismaClient): Promise<Post[] | void>
   }
 };
 
-export const getAllPosts = async (uuid: string, prisma: PrismaClient) => {
+export const getAllPosts: CircuitBreakerFunction<[string, PrismaClient], Post[] | DatabaseErrorHandlerResponse> = async (
+  uuid: string,
+  prisma: PrismaClient
+) => {
   const breaker = createCircuitBreaker(uuid, getDatabaseAllPosts);
   return breaker(prisma);
 };
@@ -37,7 +41,7 @@ export const getAllPosts = async (uuid: string, prisma: PrismaClient) => {
 
 type CreatePost = Pick<Post, 'title' | 'content'>;
 
-const createDatabasePost = async (prisma: PrismaClient, { title, content }: CreatePost): Promise<Post> => {
+const createDatabasePost: ExecuteFunction<[PrismaClient, CreatePost], Post> = async (prisma: PrismaClient, { title, content }: CreatePost) => {
   try {
     if (!PostSchema.parse({ title, content })) {
       return Promise.reject(() => new DatabaseInvalidParametersException());
@@ -66,7 +70,11 @@ const createDatabasePost = async (prisma: PrismaClient, { title, content }: Crea
   }
 };
 
-export const createPost = async (uuid: string, prisma: PrismaClient, { title, content }: CreatePost) => {
+export const createPost: CircuitBreakerFunction<[string, PrismaClient, CreatePost], Post | DatabaseErrorHandlerResponse> = async (
+  uuid: string,
+  prisma: PrismaClient,
+  { title, content }: CreatePost
+) => {
   const breaker = createCircuitBreaker(uuid, createDatabasePost);
   return breaker(prisma, {
     title,

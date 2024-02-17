@@ -1,8 +1,9 @@
 import { User, PrismaClient } from '@prisma/client';
-import { createCircuitBreaker } from '@/server/utils/circuitBreaker';
+import { CircuitBreakerFunction, ExecuteFunction, createCircuitBreaker } from '@/server/utils/circuitBreaker';
+import { DatabaseErrorHandlerResponse } from '@/server/utils/handler/error';
 // ... LIST
 
-export const getDatabaseAllUsers = async (prisma: PrismaClient): Promise<User[] | void> => {
+export const getDatabaseAllUsers: ExecuteFunction<[PrismaClient], User[]> = async (prisma: PrismaClient) => {
   try {
     const users = prisma.user.findMany();
     return users;
@@ -11,7 +12,7 @@ export const getDatabaseAllUsers = async (prisma: PrismaClient): Promise<User[] 
   }
 };
 
-export const getAllUsers = async (uuid: string, prisma: PrismaClient) => {
+export const getAllUsers: CircuitBreakerFunction<[string, PrismaClient], User[] | DatabaseErrorHandlerResponse> = async (uuid: string, prisma: PrismaClient) => {
   const breaker = createCircuitBreaker(uuid, getDatabaseAllUsers);
   return breaker(prisma);
 };

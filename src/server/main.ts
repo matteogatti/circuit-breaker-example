@@ -6,6 +6,7 @@ import express, { Request, Response } from 'express';
 import { getRequestID, setRequestID } from '@/server/utils/requestId';
 import ViteExpress from 'vite-express';
 import bodyParser from 'body-parser';
+import { listPostPresenter, singlePostPresenter } from '@/server/presenter/post';
 // import pinoHttp from 'pino-http';
 
 const app = express().disable('x-powered-by');
@@ -19,25 +20,28 @@ app.use(bodyParser.json()); // PARSE BODY AS JSON
 
 // ... ROUTES
 
-app.all('/api/v1/posts', async (req: Request, res: Response) => {
-  const { method } = req;
+app.get('/api/v1/posts', async (_: Request, res: Response) => {
   const uuid = getRequestID(res);
 
-  if (method === METHOD.GET) {
-    const posts = await getAllPosts(uuid, prisma);
-    return res.status(STATUS.OK).json(posts);
+  const result = await getAllPosts(uuid, prisma);
+  if ('errorCode' in result) {
+    return res.status(STATUS.BAD_REQUEST).json(result);
   }
+  return res.status(STATUS.OK).json(listPostPresenter(result));
+});
 
-  if (method === METHOD.POST) {
-    const {
-      body: { title, content },
-    } = req;
+app.post('/api/v1/posts', async (req: Request, res: Response) => {
+  const uuid = getRequestID(res);
 
-    const post = await createPost(uuid, prisma, { title, content });
-    return res.status(STATUS.OK).json(post);
+  const {
+    body: { title, content },
+  } = req;
+
+  const result = await createPost(uuid, prisma, { title, content });
+  if ('errorCode' in result) {
+    return res.status(STATUS.BAD_REQUEST).json(result);
   }
-
-  return res.status(STATUS.BAD_REQUEST).json({});
+  return res.status(STATUS.OK).json(singlePostPresenter(result));
 });
 
 app.get('/api/v1/users', async (req: Request, res: Response) => {
@@ -46,8 +50,11 @@ app.get('/api/v1/users', async (req: Request, res: Response) => {
 
   if (method === METHOD.GET) {
     try {
-      const users = await getAllUsers(uuid, prisma);
-      return res.status(STATUS.OK).json(users);
+      const result = await getAllUsers(uuid, prisma);
+      if ('errorCode' in result) {
+        return res.status(STATUS.BAD_REQUEST).json(result);
+      }
+      return res.status(STATUS.OK).json(result);
     } catch (e) {
       return res.status(STATUS.BAD_REQUEST).json({ error: e });
     }

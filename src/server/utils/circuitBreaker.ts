@@ -26,13 +26,15 @@ const options = {
   resetTimeout: 10000, // After 10 seconds, try again.
 };
 
-interface CircuitBreakerFunction<TI extends unknown[] = unknown[], TR = unknown> {
-  (...args: TI): Promise<TR | unknown>;
-}
+export type CircuitBreakerFunction<TI extends unknown[] = unknown[], TR = unknown> = (...args: TI) => Promise<TR>;
+
+export type ExecuteFunction<TI extends unknown[] = unknown[], TR = unknown> = CircuitBreakerFunction<TI, TR> & {
+  name: string;
+};
 
 export const createCircuitBreaker = <TI extends unknown[] = unknown[], TR = unknown>(
   uuid: string,
-  executeFunction: CircuitBreakerFunction<TI, TR>
+  executeFunction: ExecuteFunction<TI, TR>
 ): CircuitBreakerFunction<TI, TR> => {
   const breaker = new CircuitBreaker(executeFunction, options);
 
