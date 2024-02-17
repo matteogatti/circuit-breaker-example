@@ -1,11 +1,16 @@
+import { DatabaseCrazyMonkeyException } from '@/server/exception/database';
 import { createCircuitBreaker } from '@/server/utils/circuitBreaker';
-import logger from '@/server/utils/logger';
+import { hasCrazyMonkey } from '@/server/utils/crazyMonkey';
 import { Post, PrismaClient } from '@prisma/client';
 
 // ... LIST
 
 const getDatabaseAllPosts = async (prisma: PrismaClient): Promise<Post[] | void> => {
   try {
+    if (hasCrazyMonkey()) {
+      return new Promise((_, reject) => setTimeout(() => reject(new DatabaseCrazyMonkeyException('crazy monkey')), 1000));
+    }
+
     const posts = await prisma.post.findMany({
       include: {
         author: true,
@@ -17,8 +22,8 @@ const getDatabaseAllPosts = async (prisma: PrismaClient): Promise<Post[] | void>
   }
 };
 
-export const getAllPost = async (prisma: PrismaClient) => {
-  const breaker = createCircuitBreaker(getDatabaseAllPosts, logger);
+export const getAllPosts = async (uuid: string, prisma: PrismaClient) => {
+  const breaker = createCircuitBreaker(uuid, getDatabaseAllPosts);
   return breaker(prisma);
 };
 
@@ -50,8 +55,8 @@ const createDatabasePost = async (prisma: PrismaClient, { title, content }: Crea
   }
 };
 
-export const createPost = async (prisma: PrismaClient, { title, content }: CreatePost) => {
-  const breaker = createCircuitBreaker(createDatabasePost, logger);
+export const createPost = async (uuid: string, prisma: PrismaClient, { title, content }: CreatePost) => {
+  const breaker = createCircuitBreaker(uuid, createDatabasePost);
   return breaker(prisma, {
     title,
     content,

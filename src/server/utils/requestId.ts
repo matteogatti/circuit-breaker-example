@@ -8,7 +8,7 @@ function generateV4UUID(_request: Request) {
 const ATTRIBUTE_NAME = 'id';
 const HEADER_NAME = 'X-Request-Id';
 
-export default function requestID({ generator = generateV4UUID, headerName = HEADER_NAME, setHeader = true } = {}) {
+export function setRequestID({ generator = generateV4UUID, headerName = HEADER_NAME, setHeader = true } = {}) {
   return function (request: Request, response: Response, next: NextFunction) {
     const oldValue = request.get(headerName);
     const id = oldValue === undefined ? generator(request) : oldValue;
@@ -21,4 +21,8 @@ export default function requestID({ generator = generateV4UUID, headerName = HEA
 
     next();
   };
+}
+
+export function getRequestID(response: Response): string {
+  return response.getHeader(HEADER_NAME)?.toString() || '';
 }

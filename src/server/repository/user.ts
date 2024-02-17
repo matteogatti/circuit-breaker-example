@@ -1,7 +1,5 @@
 import { User, PrismaClient } from '@prisma/client';
-import logger from '@/server/utils/logger';
 import { createCircuitBreaker } from '@/server/utils/circuitBreaker';
-
 // ... LIST
 
 export const getDatabaseAllUsers = async (prisma: PrismaClient): Promise<User[] | void> => {
@@ -13,7 +11,7 @@ export const getDatabaseAllUsers = async (prisma: PrismaClient): Promise<User[] 
   }
 };
 
-export const getAllUsers = async (prisma: PrismaClient) => {
-  const breaker = createCircuitBreaker(getDatabaseAllUsers, logger);
+export const getAllUsers = async (uuid: string, prisma: PrismaClient) => {
+  const breaker = createCircuitBreaker(uuid, getDatabaseAllUsers);
   return breaker(prisma);
 };

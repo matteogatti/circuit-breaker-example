@@ -1,25 +1,28 @@
 import { METHOD, STATUS } from '@/server/model/method';
-import { createPost, getAllPost } from '@/server/repository/post';
+import { createPost, getAllPosts } from '@/server/repository/post';
 import { getAllUsers } from '@/server/repository/user';
 import { PrismaClient } from '@prisma/client';
 import express, { Request, Response } from 'express';
-import requestID from '@/server/utils/requestId';
+import { getRequestID, setRequestID } from '@/server/utils/requestId';
 import ViteExpress from 'vite-express';
+// import pinoHttp from 'pino-http';
 
 const app = express().disable('x-powered-by');
 const prisma = new PrismaClient();
 
 // ... MIDDLEWARES
 
-app.use(requestID());
+app.use(setRequestID()); // SET UNIQUE UUID PER REQUEST
+// app.use(pinoHttp()); // LOG ALL REQUESTS
 
 // ... ROUTES
 
-app.get('/api/v1/posts', async (req: Request, res: Response) => {
+app.all('/api/v1/posts', async (req: Request, res: Response) => {
   const { method } = req;
+  const uuid = getRequestID(res);
 
   if (method === METHOD.GET) {
-    const posts = await getAllPost(prisma);
+    const posts = await getAllPosts(uuid, prisma);
     return res.status(STATUS.OK).json(posts);
   }
 
@@ -28,7 +31,7 @@ app.get('/api/v1/posts', async (req: Request, res: Response) => {
       body: { title, content },
     } = req;
 
-    const post = await createPost(prisma, { title, content });
+    const post = await createPost(uuid, prisma, { title, content });
     return res.status(STATUS.OK).json(post);
   }
 
@@ -37,10 +40,11 @@ app.get('/api/v1/posts', async (req: Request, res: Response) => {
 
 app.get('/api/v1/users', async (req: Request, res: Response) => {
   const { method } = req;
+  const uuid = getRequestID(res);
 
   if (method === METHOD.GET) {
     try {
-      const users = await getAllUsers(prisma);
+      const users = await getAllUsers(uuid, prisma);
       return res.status(STATUS.OK).json(users);
     } catch (e) {
       return res.status(STATUS.BAD_REQUEST).json({ error: e });
