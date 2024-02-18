@@ -14,7 +14,7 @@ Created the environment we can start the project in this way:
 
 1. create `.env` file into root folder of the project and copy/past this value `DATABASE_URL="postgresql://user:secret@localhost:5432/app?schema=public"`
 2. ensure the **Node** version is the same of the file `.nvmrc`
-3. install all the dependency with `npm i`
+3. install all the dependencies with `npm i`
 4. import database schema with `npx prisma migrate dev --name init`
 5. import dummy data with `npm run seed`
 6. now you can start the server with `npm run dev`
@@ -42,7 +42,6 @@ curl --location 'http://127.0.0.1:3000/api/v1/posts' \
 ### :monkey_face: Warning Notes
 
 Unfortunately during the development of this code my domestic chimps is escaped, and you know, monkeys sometime can do crazy things!!!
-
 
 ## :pencil2: Refereces
 

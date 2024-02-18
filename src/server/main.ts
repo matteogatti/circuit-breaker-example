@@ -1,4 +1,4 @@
-import { METHOD, STATUS } from '@/server/model/method';
+import { STATUS } from '@/server/model/method';
 import { createPost, getAllPosts } from '@/server/repository/post';
 import { getAllUsers } from '@/server/repository/user';
 import { PrismaClient } from '@prisma/client';
@@ -19,7 +19,6 @@ app.use(bodyParser.json()); // PARSE BODY AS JSON
 // app.use(pinoHttp()); // LOG ALL REQUESTS
 
 // ... ROUTES
-
 app.get('/api/v1/posts', async (_: Request, res: Response) => {
   const uuid = getRequestID(res);
 
@@ -44,23 +43,14 @@ app.post('/api/v1/posts', async (req: Request, res: Response) => {
   return res.status(STATUS.OK).json(singlePostPresenter(result));
 });
 
-app.get('/api/v1/users', async (req: Request, res: Response) => {
-  const { method } = req;
+app.get('/api/v1/users', async (_: Request, res: Response) => {
   const uuid = getRequestID(res);
 
-  if (method === METHOD.GET) {
-    try {
-      const result = await getAllUsers(uuid, prisma);
-      if ('errorCode' in result) {
-        return res.status(STATUS.BAD_REQUEST).json(result);
-      }
-      return res.status(STATUS.OK).json(result);
-    } catch (e) {
-      return res.status(STATUS.BAD_REQUEST).json({ error: e });
-    }
+  const result = await getAllUsers(uuid, prisma);
+  if ('errorCode' in result) {
+    return res.status(STATUS.BAD_REQUEST).json(result);
   }
-
-  return res.status(STATUS.BAD_REQUEST).json({});
+  return res.status(STATUS.OK).json(result);
 });
 
 // ... EVENTS
